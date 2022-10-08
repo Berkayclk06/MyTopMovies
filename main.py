@@ -47,23 +47,48 @@ class RateMovieForm(FlaskForm):
     submit = SubmitField('Done')
 
 
+class AddMovie(FlaskForm):
+    movie_title = StringField("Movie Title")
+    submit = SubmitField("Add Movie")
+
+
 @app.route("/")
 def home():
     all_movies = db.session.query(Movies).all()
     return render_template("index.html", movies=all_movies)
 
 
-@app.route("/update/<id>", methods=["GET", "POST"])
-def update(id):
+@app.route("/update", methods=["GET", "POST"])
+def update():
     form = RateMovieForm()
     if form.validate_on_submit():
-        print(True)
-        movie_to_update = Movies.query.filter_by(id=id).first()
+        movie_id = request.args.get("id")
+        movie_to_update = Movies.query.get(movie_id)
         movie_to_update.review = form.update_review.data
         movie_to_update.rating = form.update_rating.data
         db.session.commit()
         return redirect(url_for('home'))
     return render_template("edit.html", form=form, id=id)
+
+
+@app.route('/delete')
+def delete():
+    movie_id = request.args.get("id")
+    movie_delete = Movies.query.get(movie_id)
+    db.session.delete(movie_delete)
+    db.session.commit()
+    return redirect(url_for('home'))
+
+
+# @app.route('/add', methods=["GET", "POST"])
+# def add():
+#     form = AddMovie()
+#     if form.validate_on_submit():
+#         new_movie = Movies(title=form.movie_title.data)
+#         db.session.add(new_movie)
+#         db.session.commit()
+#         return redirect(url_for('home'))
+#     return render_template('add.html', form=form)
 
 
 if __name__ == '__main__':
